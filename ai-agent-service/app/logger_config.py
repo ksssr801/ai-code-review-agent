@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from typing import Any
 
@@ -12,10 +13,23 @@ def configure_logging() -> None:
     colorful console logs in development. Replaces the default Python log handlers.
     """
     settings = get_settings()
+    os.makedirs("./logs", exist_ok=True)
+
+    is_development = settings.environment.lower() == "development"
+
+    log_handlers = [
+        logging.StreamHandler(sys.stdout),
+    ]
+    if not is_development:
+        log_handlers.append(logging.FileHandler("logs/agent.log"))
 
     # Set the root logger level
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
-    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=log_level)
+    logging.basicConfig(
+        format="%(message)s",
+        handlers=log_handlers,
+        level=log_level,
+    )
 
     # Common processors for both dev and prod
     shared_processors = [
@@ -26,8 +40,6 @@ def configure_logging() -> None:
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
     ]
-
-    is_development = settings.environment.lower() == "development"
 
     if is_development:
         # Development: Human-readable colorful logs

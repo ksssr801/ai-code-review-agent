@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     """
 
     # Service settings
-    app_name: str = "leave-policy-agent-service"
+    app_name: str = "ai-code-review-agent"
     environment: str = "development"
     debug: bool = True
     port: int = 8000
@@ -18,18 +18,26 @@ class Settings(BaseSettings):
     # LLM settings
     openai_api_key: str = ""
     llm_model: str = "gpt-4o-mini"
+    
+    # Github Integration
+    github_token: str = ""
+    github_webhook_secret: str = ""
+    ai_review_label: str = "ai-review"    
 
     # Logging
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_file=".env", 
+        env_file_encoding="utf-8", 
+        case_sensitive=False, 
+        extra="ignore"
     )
 
 
 @lru_cache()
 def get_settings() -> Settings:
     """
-    Returns a cached instance of the settings object.
+    Returns a cached instance of the settings object. Prevents reload of settings on every request.
     """
     return Settings()
