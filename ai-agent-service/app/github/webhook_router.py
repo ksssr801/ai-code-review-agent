@@ -17,7 +17,19 @@ async def github_webhook(request: Request):
 
     verify_github_signature(request, body)
 
-    payload = WebhookPayload.model_validate_json(body)
+    event_type = request.headers.get("X-GitHub-Event")
+    payload_dict = await request.json()
+
+    # Handle ping event
+    if event_type == "ping":
+        logger.info("Ping received from GitHub")
+        return {"status": "ok"}
+
+    if event_type != "pull_request":
+        logger.info(f"Event type {event_type} is not supported")
+        return {"status": "ignored"}
+
+    payload = WebhookPayload.model_validate(payload_dict)
 
     logger.info(
         f"Webhook received: action={payload.action}, repo={payload.repository.full_name}"
