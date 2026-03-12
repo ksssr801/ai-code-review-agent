@@ -1,5 +1,6 @@
 from app.config import get_settings
 from app.logger_config import get_logger
+from app.github.github_client import GitHubClient
 
 logger = get_logger(__name__)
 
