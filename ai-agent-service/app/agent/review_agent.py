@@ -3,6 +3,7 @@ from app.github.github_client import GitHubClient
 from app.logger_config import get_logger
 from app.services.chunking_service import ChunkingService
 from app.services.diff_extractor import DiffExtractor
+from app.services.llm_review_service import LLMReviewService
 
 logger = get_logger(__name__)
 
@@ -52,6 +53,25 @@ async def start_review(repo: str, pr_number: int):
             "repository": repo,
             "pull_request": pr_number,
             "chunks": len(chunks),
+        },
+    )
+
+    comments = await LLMReviewService.review_chunks(chunks)
+
+    # fetch commit id
+    pr = await client.get_pull_request(repo, pr_number)
+    commit_id = pr["head"]["sha"]
+
+    # post comments
+    for comment in comments:
+        await client.create_review_comment(repo, pr_number, comment, commit_id)
+
+    logger.info(
+        "Comments generated",
+        extra={
+            "repository": repo,
+            "pull_request": pr_number,
+            "comments": len(comments),
         },
     )
 
