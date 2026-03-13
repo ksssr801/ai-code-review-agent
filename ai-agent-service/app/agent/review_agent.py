@@ -1,6 +1,8 @@
 from app.config import get_settings
 from app.github.github_client import GitHubClient
 from app.logger_config import get_logger
+from app.services.chunking_service import ChunkingService
+from app.services.diff_extractor import DiffExtractor
 
 logger = get_logger(__name__)
 
@@ -33,16 +35,25 @@ async def start_review(repo: str, pr_number: int):
         },
     )
 
-    for file in files:
-        logger.info(
-            "File change detected",
-            extra={
-                "filename": file.get("filename", ""),
-                "status": file.get("status", ""),
-                "additions": file.get("additions", 0),
-                "deletions": file.get("deletions", 0),
-            },
-        )
+    diffs = DiffExtractor.extract(files)
+    logger.info(
+        "Diffs extracted",
+        extra={
+            "repository": repo,
+            "pull_request": pr_number,
+            "diffs": len(diffs),
+        },
+    )
+
+    chunks = ChunkingService.chunk_diffs(diffs)
+    logger.info(
+        "Chunks created",
+        extra={
+            "repository": repo,
+            "pull_request": pr_number,
+            "chunks": len(chunks),
+        },
+    )
 
     # Future pipeline
     # 1 fetch PR diff
